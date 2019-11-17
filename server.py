@@ -1,60 +1,138 @@
 #!/usr/bin/python3
-import time
+
 import socket
+import os
+import random
+#from random import randrange
+
+USUARIOS = ["USER1", "USER2", "USER3"]
+SENHAS = ["SENHA1", "SENHA2", "SENHA3"]
+BANCO = []
 
 host = "" #Nome ou endereço IP da máquina servidora
 port = 3000        #Porta que o servidor vai aguardar conexões 
-palavra = ["insert","update","delete","find","list"]
-resultado = "Protocolo inválido."  
-comandoNaoEncontrado = 1;
-dados = []
 
-
+# Cria um socket usando o protocolo TCP
 soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  
+
+# Essa linha abaixo é pra fechar o socket caso o programa seja interrompido, por exemplo, com CONTROL+C
+soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
+
+# Associa a porta e o host ao socket 
 soc.bind((host,port)) 
+
+# Inicia uma thread que aguarda por uma conexão
 soc.listen(100)
 
-def comunicacao():
-  while True:
+# Loop infinito que aguarda conexões, uma de cada vez
+while True:
     print("Aguardando conexão na porta " + str(port) + " ...")
     con, client = soc.accept() 
-    while(True):
-      try:
-          msg = con.recv(1024).decode()
-          print(">> " + str(client) + ": " + msg)
-          lista = msg.split()   
+    
+    while True:
+       msg = con.recv(1024).decode()
+       print("Recebeu de " + str(client) + ": " + msg)
+       print(">> " + str(client) + ": " + msg)
+      
+       #Cria uma lista com a mensagem enviada pelo usuário
+       lista = msg.split() 
+       
+       #garante que o servidor não feche ao ser digitado quit ou pressionado ctrl+c
+       if len(lista) > 0:
           comando = lista[0]
+       else:
+          break
+       
+       resultado = "ERRO a operação '" + comando + "' não existe"
+       
+       if comando == "insert":
+          if len(lista) > 1:
+             qtd = len(lista)
+             nome = ""
+             for i in range(1, qtd):
+                if i == qtd - 1:
+                   nome = nome + lista[i]
+                else:
+                   nome = nome + lista[i] + " "
+                str(nome)
+             BANCO.append(nome)
+             resultado = "OK"
+          else:
+             resultado = "ERRO a operação insert exige um argumento <nome>."
 
-          if comando == palavra[0]:
-              dados.append(lista[1])
-              con.sendall("palavra adicionada".encode())    
+       if comando == "list":
+          if len(lista) == 1:
+             resultado = ""
+             if len(BANCO) > 0:
+                for i in range(0, len(BANCO)):
+                   if i == len(BANCO) - 1:
+                      result = "[" + str(i) + "] " + str(BANCO[i])
+                   else:
+                      result = "[" + str(i) + "] " + str(BANCO[i]) + "\n"
+                   resultado = resultado + result
+                str(resultado)
+             else:
+                resultado = "A lista de nomes está vazia."
+          else:
+             resultado = "ERRO a operação list não recebe argumentos."
 
-          if comando == palavra[1]:
-              prin("....")
+       if comando == "update":
+          if len(lista) > 2:
+             try:
+                indice = int(lista[1])
+                nome = ""
+                qtd = len(lista)
+                for i in range(2, qtd):
+                   if i == qtd - 1:
+                      nome = nome + lista[i]
+                   else:
+                      nome = nome + lista[i] + " "
+                   str(nome)
+                if indice < len(BANCO):
+                   BANCO[indice] = nome
+                   resultado = "OK"
+                else:
+                   resultado = "ERRO indice " + str(indice) + " não existe."
+             except ValueError:
+                resultado = "ERRO o argumento <indice> precisa ser um valor inteiro."
+          else:
+             resultado = "ERRO a operação update exige os argumentos <indice> <nome>."
 
-          if comando == palavra[2]:
-              prin("....")
+       if comando == "delete":
+          if len(lista) == 2:
+             try:
+                indice = int(lista[1])
+                if indice < len(BANCO):
+                   del BANCO[indice]
+                   resultado = "OK"
+                else:
+                   resultado = "ERRO indice " + str(indice) + " não existe."
+             except ValueError:
+                resultado = "ERRO o argumento <indice> precisa ser um valor inteiro."
+          else:
+             resultado = "ERRO a operação delete exige um argumento <indice>."
 
-          if comando == palavra[3]:
-              prin("....")   
+       if comando == "find":
+          if len(lista) == 2:
+             qtd = len(BANCO)
+             find = lista[1]
+             select = ""
+             for i in range(0, qtd):
+                pesquisa = BANCO[i]
+                if find in pesquisa:
+                   select = select + "[" + str(i) + "] " + BANCO[i] + "\n"
+                   #print("[" + str(i) + "] " + BANCO[i])
+             if select != "":
+                posicao = len(select)
+                resultado = select[:posicao - 1]
+             else:
+                resultado = "Nenhum resultado encontrado para ’" + find + "’."
+             str(resultado)
+          else:
+             resultado = "ERRO a operação find exige um argumento <busca>."
 
-          if comando == palavra[4]:
-              aux = 1;
-              for x in dados:
-                  con.sendall( (x+"\n").encode() ) 
-                  ++aux
+       #Envia para o cliente o conteúdo da variável resultado 
+       con.sendall(resultado.encode())  
+  
+    con.close() 
 
-          for teste in palavra:
-              if teste == comando:
-                  ++comandoNaoEncontrado
-          if comandoNaoEncontrado == 4:
-              con.sendall((resultado+",").encode()) 
-
-
-      except Exception as e:   
-              print("servidor parado...\n reconectando em 3s\n") 
-              time.sleep(3) 
-              comunicacao()
-comunicacao()              
-           

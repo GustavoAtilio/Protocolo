@@ -11,6 +11,10 @@ soc.connect((host,port))
 while True:
 
    msg = input(">>> ")
+   
+   if msg == "quit":
+      soc.close
+      break
 
    soc.sendall(msg.encode())
 
