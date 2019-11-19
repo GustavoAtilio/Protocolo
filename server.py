@@ -8,6 +8,7 @@ import random
 USUARIOS = ["USER1", "USER2", "USER3"]
 SENHAS = ["SENHA1", "SENHA2", "SENHA3"]
 BANCO = []
+Logado = 0;
 
 host = "" #Nome ou endereço IP da máquina servidora
 port = 3000        #Porta que o servidor vai aguardar conexões 
@@ -44,6 +45,21 @@ while True:
           break
        
        resultado = "ERRO a operação '" + comando + "' não existe"
+
+       if comando == "login":
+
+           if len(lista) == 3:
+             for i in USUARIOS:
+               if lista[1] == i:
+                  for x in SENHAS:
+                     if lista[2] == x:
+                        Logado = 1
+                        
+           if Logado == 1:
+               resultado = "Logado com sucesso!"
+           else:
+              resultado = "Senha e/ou Usuario incorretos! SENHA"                  
+                       
        
        if comando == "insert":
           if len(lista) > 1:
