@@ -15,6 +15,15 @@ while True:
    if msg == "quit":
       soc.close
       break
+   if len(msg) <= 0:
+      continue
+   else:
+      espaco = 0
+      for i in msg:
+         if i == " ":
+            espaco = espaco + 1
+      if len(msg) == espaco:
+         continue
 
    soc.sendall(msg.encode())
 
